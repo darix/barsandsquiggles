@@ -27,4 +27,12 @@ def run():
   if pillar_section in __pillar__ and __pillar__[pillar_section].get("enabled", True):
     app_pillar = __pillar__[pillar_section]
 
+    app_packages = ["tempo"]
+
+    config["tempo_packages"] = {
+      "pkg.installed": [
+        { "pkgs": postfix_packages },
+      ]
+    }
+
   return config
