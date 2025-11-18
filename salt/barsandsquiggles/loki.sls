@@ -17,3 +17,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+def run():
+  config = {}
+
+  pillar_section = "loki"
+
+  if pillar_section in __pillar__ and __pillar__[pillar_section].get("enabled", True):
+    app_pillar = __pillar__[pillar_section]
+
+  return config

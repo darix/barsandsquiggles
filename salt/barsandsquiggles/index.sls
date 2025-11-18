@@ -1,4 +1,3 @@
-#!py
 #
 # thepostman
 #
