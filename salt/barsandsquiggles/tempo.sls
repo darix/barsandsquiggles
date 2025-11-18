@@ -31,7 +31,7 @@ def run():
 
     config["tempo_packages"] = {
       "pkg.installed": [
-        { "pkgs": postfix_packages },
+        { "pkgs": app_packages },
       ]
     }
 
