@@ -20,11 +20,12 @@
 
 class GrafanaAppService:
   def __init__(self,config):
-    self.appname = ""
+    self.appname = None
     self.package_list = []
-    self.config_path = ""
-    self.service_name = ""
+    self.config_dir   = None
+    self.service_name = None
     self.config = config
+    self.default_config_filename = "config"
 
     self.service_deps = []
 
@@ -47,50 +48,112 @@ class GrafanaAppService:
 
     self.setup_config_section()
 
-    self.config[self.service_section] = {
-      "service.running": [
-        {"name":    self.service_name},
-        {"enable":  True},
-        {"reload":  True},
-        {"require": self.service_deps}
-      ]
-    }
-
   def setup_config_section(self):
-    self.service_deps.append(self.config_section)
     requires = [self.package_section]
-    self.config[self.config_section] = {
-      'file.serialize': [
-        {'name':            self.config_path},
-        {'user':            'root'},
-        {'group':           self.appname},
-        {'mode':            '0640'},
-        {'require':         requires },
-        {'dataset':         __salt__['pillar.get'](f"{self.appname}:config", {})},
-        {'serializer':      'yaml'},
-        {'serializer_opts': {'indent': 2}}
-      ]
-    }
+
+    if "instances" in __salt__['pillar.get'](f"{self.appname}"):
+      for instance_name, instance_config in __salt__['pillar.get'](f"{self.appname}:instances", {}).items():
+
+        service_section = f"{self.service_section}_{instance_name}"
+        config_section = f"{self.config_section}_{instance_name}"
+        config_path    = f"{self.config_dir}/{instance_name}.yaml"
+
+        service_deps = self.service_deps.copy()
+        service_deps.append(config_section)
+
+        self.config[config_section] = {
+          'file.serialize': [
+            {'name':            config_path},
+            {'user':            'root'},
+            {'group':           self.appname},
+            {'mode':            '0640'},
+            {'require':         requires },
+            {'dataset':         instance_config},
+            {'serializer':      'yaml'},
+            {'serializer_opts': {'indent': 2}}
+          ]
+        }
+
+        self.config[service_section] = {
+          "service.running": [
+            {"name":    f"{self.service_name}@{instance_name}.service" },
+            {"enable":  True},
+            {"reload":  True},
+            {"require": service_deps}
+          ]
+        }
+    else:
+        service_section = f"{self.service_section}"
+        config_section = f"{self.config_section}"
+        config_path    = f"{self.config_dir}/{self.default_config_filename}.yaml"
+
+        service_deps = self.service_deps.copy()
+        service_deps.append(config_section)
+
+        self.config[config_section] = {
+          'file.serialize': [
+            {'name':            config_path},
+            {'user':            'root'},
+            {'group':           self.appname},
+            {'mode':            '0640'},
+            {'require':         requires },
+            {'dataset':         __salt__['pillar.get'](f"{self.appname}:config", {})},
+            {'serializer':      'yaml'},
+            {'serializer_opts': {'indent': 2}}
+          ]
+        }
+
+        self.config[service_section] = {
+          "service.running": [
+            {"name":    f"{self.service_name}.service" },
+            {"enable":  True},
+            {"reload":  True},
+            {"require": self.service_deps}
+          ]
+        }
 
   def cleanup_sections(self):
+    purge_deps = [self.service_section]
     self.config[self.service_section] = {
       "service.dead": [
           {'name': self.service_name},
           {'enable': False},
       ]
     }
+    if "instances" in __salt__['pillar.get'](f"{self.appname}"):
+      for instance_name, instance_config in __salt__['pillar.get'](f"{self.appname}:instances", {}).items():
+        service_section = f"{self.service_section}_{instance_name}"
+        config_section = f"{self.config_section}_{instance_name}"
+        config_path    = f"{self.config_dir}/{instance_name}.yaml"
 
-    self.config[self.config_section] = {
-      "file.absent": [
-        {'name':    self.config_path },
-        {'require': [self.service_section]},
-      ]
-    }
+      self.config[service_section] = {
+        "service.dead": [
+            {'name': f"{self.service_name}@{instance_name}.service"},
+            {'enable': False},
+        ]
+      }
+
+      self.config[config_section] = {
+        "file.absent": [
+          {'name':    config_path },
+          {'require': [service_section]},
+        ]
+      }
+      purge_deps.append(config_section)
+    else:
+
+      self.config[self.config_section] = {
+        "file.absent": [
+          {'name':    f"{self.config_dir}/{self.default_config_filename}.yaml" },
+          {'require': [self.service_section]},
+        ]
+      }
+      purge_deps.append(self.config_section)
 
     self.config[self.package_section] = {
       "pkg.purged": [
         {'pkgs':    self.package_list},
-        {'require': [self.config_section]},
+        {'require': purge_deps},
       ]
     }
 
@@ -99,8 +162,8 @@ class TempoService(GrafanaAppService):
     super().__init__(config)
     self.appname = "tempo"
     self.package_list = ["tempo"]
-    self.config_path = "/etc/tempo/config.yaml"
-    self.service_name = "tempo.service"
+    self.config_dir = "/etc/tempo"
+    self.service_name = "tempo"
     self.build_config()
 
 class MimirService(GrafanaAppService):
@@ -108,8 +171,8 @@ class MimirService(GrafanaAppService):
     super().__init__(config)
     self.appname = "mimir"
     self.package_list = ["mimir"]
-    self.config_path = "/etc/mimir/config.yaml"
-    self.service_name = "mimir.service"
+    self.config_dir = "/etc/mimir"
+    self.service_name = "mimir"
     self.build_config()
 
 class LokiService(GrafanaAppService):
@@ -117,8 +180,9 @@ class LokiService(GrafanaAppService):
     super().__init__(config)
     self.appname = "loki"
     self.package_list = ["logcli", "loki", "lokitool", "promtail"]
-    self.config_path = "/etc/loki/loki.yaml"
-    self.service_name = "loki.service"
+    self.config_dir = "/etc/loki"
+    self.service_name = "loki"
+    self.default_config_filename = "loki"
     self.build_config()
 
 class GrafanaService(GrafanaAppService):
@@ -126,8 +190,8 @@ class GrafanaService(GrafanaAppService):
     super().__init__(config)
     self.appname = "grafana"
     self.package_list = ["grafana"]
-    self.config_path = "/etc/grafana/grafana.yaml"
-    self.service_name = "grafana-server.service"
+    self.config_dir = "/etc/grafana"
+    self.service_name = "grafana-server"
     self.build_config()
 
   def setup_config_section(self):
@@ -135,7 +199,7 @@ class GrafanaService(GrafanaAppService):
     requires = [self.package_section]
     self.config[self.config_section] = {
       'file.serialize': [
-        {'name':            self.config_path},
+        {'name':            f"{self.config_dir}/{self.default_config_filename}.yaml"},
         {'user':            'root'},
         {'group':           self.appname},
         {'mode':            '0640'},
