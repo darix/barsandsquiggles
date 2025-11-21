@@ -33,6 +33,7 @@ class GrafanaAppService:
     self.package_section = f"{self.appname}_packages"
     self.config_section = f"{self.appname}_config"
     self.service_section = f"{self.appname}_service"
+    self.target_section = f"{self.appname}_target"
 
     if self.appname in __pillar__ and __pillar__[self.appname].get("enabled", True):
       self.setup_sections()
@@ -80,6 +81,7 @@ class GrafanaAppService:
             {"enable":  True},
             {"reload":  True},
             {"require": service_deps}
+            {"require_in": self.target_section}
           ]
         }
     else:
@@ -109,17 +111,27 @@ class GrafanaAppService:
             {"enable":  True},
             {"reload":  True},
             {"require": self.service_deps}
+            {"require_in": self.target_section}
           ]
         }
 
+    self.config[self.target_section] = {
+      "service.running": [
+        {"name":    f"{self.service_name}.target" },
+        {"enable":  True},
+        {"reload":  True},
+      ]
+    }
+
   def cleanup_sections(self):
     purge_deps = [self.service_section]
-    self.config[self.service_section] = {
+    self.config[self.target_section] = {
       "service.dead": [
-          {'name': self.service_name},
+          {'name': f"{self.service_name}.target"},
           {'enable': False},
       ]
     }
+
     if "instances" in __salt__['pillar.get'](f"{self.appname}"):
       for instance_name, instance_config in __salt__['pillar.get'](f"{self.appname}:instances", {}).items():
         service_section = f"{self.service_section}_{instance_name}"
@@ -130,6 +142,7 @@ class GrafanaAppService:
         "service.dead": [
             {'name': f"{self.service_name}@{instance_name}.service"},
             {'enable': False},
+            {'require': self.target_section},
         ]
       }
 
@@ -141,6 +154,13 @@ class GrafanaAppService:
       }
       purge_deps.append(config_section)
     else:
+      self.config[self.service_section] = {
+        "service.dead": [
+            {'name': self.service_name},
+            {'enable': False},
+            {'require': self.target_section},
+        ]
+      }
 
       self.config[self.config_section] = {
         "file.absent": [
