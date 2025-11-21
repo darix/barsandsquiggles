@@ -84,6 +84,14 @@ class GrafanaAppService:
             {"require_in": self.target_section}
           ]
         }
+
+      self.config[self.target_section] = {
+        "service.running": [
+          {"name":    f"{self.service_name}.target" },
+          {"enable":  True},
+          {"reload":  True},
+        ]
+      }
     else:
         service_section = f"{self.service_section}"
         config_section = f"{self.config_section}"
@@ -111,17 +119,8 @@ class GrafanaAppService:
             {"enable":  True},
             {"reload":  True},
             {"require": self.service_deps}
-            {"require_in": self.target_section}
           ]
         }
-
-    self.config[self.target_section] = {
-      "service.running": [
-        {"name":    f"{self.service_name}.target" },
-        {"enable":  True},
-        {"reload":  True},
-      ]
-    }
 
   def cleanup_sections(self):
     purge_deps = [self.service_section]
