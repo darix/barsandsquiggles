@@ -29,12 +29,13 @@ class GrafanaAppService:
 
     self.service_deps = []
 
-  def build_config(self):
+  def setup_names(self):
     self.package_section = f"{self.appname}_packages"
     self.config_section = f"{self.appname}_config"
     self.service_section = f"{self.appname}_service"
     self.target_section = f"{self.appname}_target"
 
+  def build_config(self):
     if self.appname in __pillar__ and __pillar__[self.appname].get("enabled", True):
       self.setup_sections()
     else:
@@ -71,7 +72,7 @@ class GrafanaAppService:
             {'require':         requires },
             {'dataset':         instance_config},
             {'serializer':      'yaml'},
-            {'serializer_opts': {'indent': 2}}
+            {'serializer_opts': {'indent': 2}},
           ]
         }
 
@@ -80,8 +81,8 @@ class GrafanaAppService:
             {"name":    f"{self.service_name}@{instance_name}.service" },
             {"enable":  True},
             {"reload":  True},
-            {"require": service_deps}
-            {"require_in": self.target_section}
+            {"require": service_deps},
+            {"require_in": self.target_section},
           ]
         }
 
@@ -109,7 +110,7 @@ class GrafanaAppService:
             {'require':         requires },
             {'dataset':         __salt__['pillar.get'](f"{self.appname}:config", {})},
             {'serializer':      'yaml'},
-            {'serializer_opts': {'indent': 2}}
+            {'serializer_opts': {'indent': 2}},
           ]
         }
 
@@ -153,21 +154,22 @@ class GrafanaAppService:
       }
       purge_deps.append(config_section)
     else:
+      purge_deps.append(self.service_section)
       self.config[self.service_section] = {
         "service.dead": [
             {'name': self.service_name},
             {'enable': False},
-            {'require': self.target_section},
+            {'require': [self.target_section]}
         ]
       }
 
+      purge_deps.append(self.config_section)
       self.config[self.config_section] = {
         "file.absent": [
           {'name':    f"{self.config_dir}/{self.default_config_filename}.yaml" },
           {'require': [self.service_section]},
         ]
       }
-      purge_deps.append(self.config_section)
 
     self.config[self.package_section] = {
       "pkg.purged": [
@@ -183,6 +185,7 @@ class TempoService(GrafanaAppService):
     self.package_list = ["tempo"]
     self.config_dir = "/etc/tempo"
     self.service_name = "tempo"
+    self.setup_names()
     self.build_config()
 
 class MimirService(GrafanaAppService):
@@ -192,7 +195,9 @@ class MimirService(GrafanaAppService):
     self.package_list = ["mimir"]
     self.config_dir = "/etc/mimir"
     self.service_name = "mimir"
+    self.setup_names()
     self.build_config()
+    # TODO: needs the runtime config
 
 class LokiService(GrafanaAppService):
   def __init__(self, config):
@@ -202,6 +207,7 @@ class LokiService(GrafanaAppService):
     self.config_dir = "/etc/loki"
     self.service_name = "loki"
     self.default_config_filename = "loki"
+    self.setup_names()
     self.build_config()
 
 class GrafanaService(GrafanaAppService):
@@ -211,6 +217,7 @@ class GrafanaService(GrafanaAppService):
     self.package_list = ["grafana"]
     self.config_dir = "/etc/grafana"
     self.service_name = "grafana-server"
+    self.setup_names()
     self.build_config()
 
   def setup_config_section(self):
