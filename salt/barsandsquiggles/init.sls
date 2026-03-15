@@ -221,7 +221,6 @@ class GrafanaService(GrafanaAppService):
     self.build_config()
 
   def setup_config_section(self):
-    self.service_deps.append(self.config_section)
     requires = [self.package_section]
     self.config[self.config_section] = {
       'file.serialize': [
@@ -229,10 +228,31 @@ class GrafanaService(GrafanaAppService):
         {'user':            'root'},
         {'group':           self.appname},
         {'mode':            '0640'},
-        {'require':         requires },
+        {'require':         requires},
         {'dataset':         __salt__['pillar.get'](f"{self.appname}:config", {})},
         {'serializer':      'yaml'},
         {'serializer_opts': {'indent': 2}}
+      ]
+    }
+
+    watch_list = [self.config_section]
+    plugins = __salt__['pillar.get'](f"{self.appname}:plugins", [])
+    for plugin_name in plugins:
+      plugin_section = f"{self.appname}_plugin_{plugin_name}"
+      self.config[plugin_section] = {
+        "cmd.run": [
+          {"name":    f"grafana-cli plugins install {plugin_name}"},
+          {"unless":  f"grafana-cli plugins ls | grep '{plugin_name}'"},
+          {"require": [self.package_section]},
+        ]
+      }
+      watch_list.append(plugin_section)
+
+    self.config[self.service_section] = {
+      "service.running": [
+        {"name":   f"{self.service_name}.service"},
+        {"enable": True},
+        {"watch":  watch_list},
       ]
     }
 
