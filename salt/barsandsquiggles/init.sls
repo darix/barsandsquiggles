@@ -254,6 +254,38 @@ class GrafanaService(GrafanaAppService):
       }
       watch_list.append(ds_section)
 
+    dashboards = __salt__['pillar.get'](f"{self.appname}:provisioning:dashboards", {})
+    for db_name, db_data in dashboards.items():
+      db_config_section = f"{self.appname}_provisioning_dashboard_{db_name}_config"
+      self.config[db_config_section] = {
+        'file.serialize': [
+          {'name':            f"{self.config_dir}/provisioning/dashboards/{db_name}.yaml"},
+          {'user':            'root'},
+          {'group':           self.appname},
+          {'mode':            '0640'},
+          {'require':         [self.package_section]},
+          {'dataset':         db_data.get('config', {})},
+          {'serializer':      'yaml'},
+          {'serializer_opts': {'indent': 2}},
+        ]
+      }
+      watch_list.append(db_config_section)
+
+      for file_name, file_source in db_data.get('files', {}).items():
+        db_file_section = f"{self.appname}_provisioning_dashboard_{db_name}_file_{file_name}"
+        self.config[db_file_section] = {
+          'file.managed': [
+            {'name':     f"/var/lib/grafana/dashboards/{file_name}"},
+            {'source':   file_source},
+            {'user':     'root'},
+            {'group':    self.appname},
+            {'mode':     '0640'},
+            {'makedirs': True},
+            {'require':  [self.package_section]},
+          ]
+        }
+        watch_list.append(db_file_section)
+
     plugins = __salt__['pillar.get'](f"{self.appname}:plugins", [])
     for plugin_name in plugins:
       plugin_section = f"{self.appname}_plugin_{plugin_name}"
@@ -310,6 +342,27 @@ class GrafanaService(GrafanaAppService):
         ]
       }
       purge_deps.append(ds_section)
+
+    dashboards = __salt__['pillar.get'](f"{self.appname}:provisioning:dashboards", {})
+    for db_name, db_data in dashboards.items():
+      db_config_section = f"{self.appname}_provisioning_dashboard_{db_name}_config"
+      self.config[db_config_section] = {
+        "file.absent": [
+          {'name':    f"{self.config_dir}/provisioning/dashboards/{db_name}.yaml"},
+          {'require': [self.service_section]},
+        ]
+      }
+      purge_deps.append(db_config_section)
+
+      for file_name in db_data.get('files', {}):
+        db_file_section = f"{self.appname}_provisioning_dashboard_{db_name}_file_{file_name}"
+        self.config[db_file_section] = {
+          "file.absent": [
+            {'name':    f"/var/lib/grafana/dashboards/{file_name}"},
+            {'require': [self.service_section]},
+          ]
+        }
+        purge_deps.append(db_file_section)
 
     self.config[self.package_section] = {
       "pkg.purged": [
