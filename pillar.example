@@ -1,0 +1,166 @@
+# barsandsquiggles pillar example
+#
+# All top-level keys are optional. Omitting a key (or setting enabled: false)
+# disables that component and triggers cleanup of its packages/config/service.
+
+# ---------------------------------------------------------------------------
+# Loki
+# ---------------------------------------------------------------------------
+loki:
+  enabled: true
+  config:
+    auth_enabled: false
+    server:
+      http_listen_port: 3100
+    common:
+      instance_addr: 127.0.0.1
+      path_prefix: /var/lib/loki
+      storage:
+        filesystem:
+          chunks_directory: /var/lib/loki/chunks
+          rules_directory: /var/lib/loki/rules
+      replication_factor: 1
+      ring:
+        kvstore:
+          store: inmemory
+    schema_config:
+      configs:
+        - from: "2020-10-24"
+          store: tsdb
+          object_store: filesystem
+          schema: v13
+          index:
+            prefix: index_
+            period: 24h
+
+# ---------------------------------------------------------------------------
+# Tempo
+# ---------------------------------------------------------------------------
+tempo:
+  enabled: true
+  config:
+    server:
+      http_listen_port: 3200
+    distributor:
+      receivers:
+        otlp:
+          protocols:
+            http: {}
+            grpc: {}
+    storage:
+      trace:
+        backend: local
+        local:
+          path: /var/lib/tempo/traces
+        wal:
+          path: /var/lib/tempo/wal
+
+# ---------------------------------------------------------------------------
+# Mimir — multi-instance example
+# ---------------------------------------------------------------------------
+mimir:
+  enabled: true
+  instances:
+    default:
+      server:
+        http_listen_port: 9009
+      blocks_storage:
+        backend: filesystem
+        filesystem:
+          dir: /var/lib/mimir/blocks
+      compactor:
+        data_dir: /var/lib/mimir/compactor
+      ingester:
+        ring:
+          replication_factor: 1
+
+# ---------------------------------------------------------------------------
+# Grafana
+# ---------------------------------------------------------------------------
+grafana:
+  enabled: true
+
+  # Plugins to install via grafana-cli (idempotent)
+  plugins:
+    - grafana-clock-panel
+    - grafana-piechart-panel
+
+  # Main grafana.ini equivalent (written to /etc/grafana/config.yaml)
+  config:
+    server:
+      http_port: 3000
+    security:
+      admin_user: admin
+    auth.anonymous:
+      enabled: false
+
+  provisioning:
+    # Each key becomes /etc/grafana/provisioning/datasources/{name}.yaml
+    datasources:
+      default:
+        apiVersion: 1
+        datasources:
+          - name: Prometheus
+            type: prometheus
+            uid: prometheus
+            access: proxy
+            orgId: 1
+            url: http://localhost:9090/
+            version: 1
+            editable: true
+            isDefault: true
+          - name: Loki
+            type: loki
+            uid: loki
+            access: proxy
+            orgId: 1
+            url: http://localhost:3100/
+            version: 1
+            editable: true
+          - name: Tempo
+            type: tempo
+            uid: tempo
+            access: proxy
+            orgId: 1
+            url: http://localhost:3200/
+            version: 1
+            editable: true
+
+    # Each key becomes /etc/grafana/provisioning/dashboards/{name}.yaml
+    # Files are fetched from the Salt fileserver and placed under
+    # /var/lib/grafana/dashboards/
+    dashboards:
+      default:
+        config:
+          - name: dashboards
+            org_id: 1
+            folder: ''
+            type: file
+            disableDeletion: false
+            allowUiUpdates: true
+            options:
+              folder: /var/lib/grafana/dashboards
+        files:
+          example.json: salt://grafana/dashboards/example.json
+
+# ---------------------------------------------------------------------------
+# Vector
+# ---------------------------------------------------------------------------
+vector:
+  enabled: true
+  enable_journal: true           # adds vector-systemd package
+  enable_remote_journal: false   # adds vector-systemd-journal-remote package
+  config:
+    sources:
+      journald:
+        type: journald
+    sinks:
+      loki:
+        type: loki
+        inputs:
+          - journald
+        endpoint: http://localhost:3100
+        encoding:
+          codec: json
+        labels:
+          host: "{{ host }}"
