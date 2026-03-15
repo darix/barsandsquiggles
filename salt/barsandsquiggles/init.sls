@@ -236,6 +236,24 @@ class GrafanaService(GrafanaAppService):
     }
 
     watch_list = [self.config_section]
+
+    datasources = __salt__['pillar.get'](f"{self.appname}:provisioning:datasources", {})
+    for ds_name, ds_config in datasources.items():
+      ds_section = f"{self.appname}_provisioning_datasource_{ds_name}"
+      self.config[ds_section] = {
+        'file.serialize': [
+          {'name':            f"{self.config_dir}/provisioning/datasources/{ds_name}.yaml"},
+          {'user':            'root'},
+          {'group':           self.appname},
+          {'mode':            '0640'},
+          {'require':         [self.package_section]},
+          {'dataset':         ds_config},
+          {'serializer':      'yaml'},
+          {'serializer_opts': {'indent': 2}},
+        ]
+      }
+      watch_list.append(ds_section)
+
     plugins = __salt__['pillar.get'](f"{self.appname}:plugins", [])
     for plugin_name in plugins:
       plugin_section = f"{self.appname}_plugin_{plugin_name}"
@@ -253,6 +271,50 @@ class GrafanaService(GrafanaAppService):
         {"name":   f"{self.service_name}.service"},
         {"enable": True},
         {"watch":  watch_list},
+      ]
+    }
+
+  def cleanup_sections(self):
+    self.config[self.target_section] = {
+      "service.dead": [
+        {'name':   f"{self.service_name}.target"},
+        {'enable': False},
+      ]
+    }
+
+    self.config[self.service_section] = {
+      "service.dead": [
+        {'name':    self.service_name},
+        {'enable':  False},
+        {'require': [self.target_section]},
+      ]
+    }
+
+    purge_deps = [self.service_section]
+
+    self.config[self.config_section] = {
+      "file.absent": [
+        {'name':    f"{self.config_dir}/{self.default_config_filename}.yaml"},
+        {'require': [self.service_section]},
+      ]
+    }
+    purge_deps.append(self.config_section)
+
+    datasources = __salt__['pillar.get'](f"{self.appname}:provisioning:datasources", {})
+    for ds_name in datasources:
+      ds_section = f"{self.appname}_provisioning_datasource_{ds_name}"
+      self.config[ds_section] = {
+        "file.absent": [
+          {'name':    f"{self.config_dir}/provisioning/datasources/{ds_name}.yaml"},
+          {'require': [self.service_section]},
+        ]
+      }
+      purge_deps.append(ds_section)
+
+    self.config[self.package_section] = {
+      "pkg.purged": [
+        {'pkgs':    self.package_list},
+        {'require': purge_deps},
       ]
     }
 
