@@ -85,7 +85,7 @@ grafana:
     - grafana-clock-panel
     - grafana-piechart-panel
 
-  # Main grafana.ini equivalent (written to /etc/grafana/config.yaml)
+  # Written to /etc/grafana/grafana.ini in INI format
   config:
     server:
       http_port: 3000

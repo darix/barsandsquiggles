@@ -224,14 +224,13 @@ class GrafanaService(GrafanaAppService):
     requires = [self.package_section]
     self.config[self.config_section] = {
       'file.serialize': [
-        {'name':            f"{self.config_dir}/{self.default_config_filename}.yaml"},
-        {'user':            'root'},
-        {'group':           self.appname},
-        {'mode':            '0640'},
-        {'require':         requires},
-        {'dataset':         __salt__['pillar.get'](f"{self.appname}:config", {})},
-        {'serializer':      'yaml'},
-        {'serializer_opts': {'indent': 2}}
+        {'name':       f"{self.config_dir}/grafana.ini"},
+        {'user':       'root'},
+        {'group':      self.appname},
+        {'mode':       '0640'},
+        {'require':    requires},
+        {'dataset':    __salt__['pillar.get'](f"{self.appname}:config", {})},
+        {'serializer': 'configparser'},
       ]
     }
 
@@ -326,7 +325,7 @@ class GrafanaService(GrafanaAppService):
 
     self.config[self.config_section] = {
       "file.absent": [
-        {'name':    f"{self.config_dir}/{self.default_config_filename}.yaml"},
+        {'name':    f"{self.config_dir}/grafana.ini"},
         {'require': [self.service_section]},
       ]
     }
