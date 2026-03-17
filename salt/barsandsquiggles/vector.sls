@@ -18,6 +18,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from salt.exceptions import SaltRenderError
+
+
 def run():
   config = {}
 
@@ -36,15 +39,20 @@ def run():
       ]
     }
 
+    config_format = __salt__['pillar.get']( 'vector:config_format', "yaml")
+
+    unless config_format in ['yaml', 'toml', 'json']:
+      raise SaltRenderError(f"The format {config_format} is not valid! only json/toml/yaml are allowed.")
+
     config['vector_config'] = {
       'file.serialize': [
-        {'name':            '/etc/vector/vector.yaml'},
+        {'name':            f'/etc/vector/vector.{{ config_format }}'},
         {'user':            'root'},
         {'group':           'vector'},
         {'mode':            '0640'},
         {'require':         ['vector_packages'] },
         {'dataset_pillar':  'vector:config'},
-        {'serializer':      'yaml'},
+        {'serializer':      config_format},
         {'serializer_opts': {'indent': 2}},
       ]
     }
