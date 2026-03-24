@@ -41,7 +41,7 @@ def run():
 
     config_format = __salt__['pillar.get']( 'vector:config_format', "yaml")
 
-    unless config_format in ['yaml', 'toml', 'json']:
+    if not(config_format in ['yaml', 'toml', 'json']):
       raise SaltRenderError(f"The format {config_format} is not valid! only json/toml/yaml are allowed.")
 
     config['vector_config'] = {
