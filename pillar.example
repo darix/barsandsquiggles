@@ -7,6 +7,18 @@
 # Loki
 # ---------------------------------------------------------------------------
 loki:
+  tls:
+    {%- set ca_path = "/usr/share/pki/trust/anchors/step-ca-at-home.crt.pem" %}
+    server:
+      cert_file: /etc/step/certs/generic.host.full.pem
+      key_file:  /etc/step/certs/generic.host.full.pem
+      client_ca_file:   {{ ca_path }}
+      client_auth_type: RequireAndVerifyClientCert
+    client:
+      tls_cert_path: /etc/step/certs/generic.user.full.pem
+      tls_key_path:  /etc/step/certs/generic.user.full.pem
+      tls_ca_path:   {{ ca_path }}
+      tls_min_version: VersionTLS13
   enabled: true
   config:
     auth_enabled: false

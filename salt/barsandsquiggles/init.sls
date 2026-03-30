@@ -1,6 +1,6 @@
 #!py
 #
-# thepostman
+# barandsquiggles
 #
 # Copyright (C) 2025   darix
 #
@@ -17,6 +17,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import copy
+import salt.utils.dictupdate as dictupdate
+import logging
+
+log = logging.getLogger("barandsquiggles")
 
 class GrafanaAppService:
   def __init__(self,config):
@@ -50,6 +55,10 @@ class GrafanaAppService:
 
     self.setup_config_section()
 
+  def merge_in_ssl_settings(self, config_block):
+    return {}
+
+
   def setup_config_section(self):
     requires = [self.package_section]
 
@@ -70,7 +79,7 @@ class GrafanaAppService:
             {'group':           self.appname},
             {'mode':            '0640'},
             {'require':         requires },
-            {'dataset':         instance_config},
+            {'dataset':         self.merge_in_ssl_settings(instance_config)},
             {'serializer':      'yaml'},
             {'serializer_opts': {'indent': 2}},
           ]
@@ -108,7 +117,7 @@ class GrafanaAppService:
             {'group':           self.appname},
             {'mode':            '0640'},
             {'require':         requires },
-            {'dataset':         __salt__['pillar.get'](f"{self.appname}:config", {})},
+            {'dataset':         self.merge_in_ssl_settings(__salt__['pillar.get'](f"{self.appname}:config", {}))},
             {'serializer':      'yaml'},
             {'serializer_opts': {'indent': 2}},
           ]
@@ -203,12 +212,38 @@ class LokiService(GrafanaAppService):
   def __init__(self, config):
     super().__init__(config)
     self.appname = "loki"
-    self.package_list = ["logcli", "loki", "lokitool", "promtail"]
+    self.package_list = ["logcli", "loki", "lokitool",]
     self.config_dir = "/etc/loki"
     self.service_name = "loki"
     self.default_config_filename = "loki"
     self.setup_names()
     self.build_config()
+
+  def merge_in_ssl_settings(self, config_block):
+    ssl_server = __salt__['pillar.get'](f"{self.appname}:tls:server", {})
+    ssl_client = __salt__['pillar.get'](f"{self.appname}:tls:client", {})
+    # log.error(f"server:{ssl_server} client:{ssl_client}")
+    if len(ssl_server) > 0 and len(ssl_client) > 0:
+      ssl_client["tls_enabled"] = True
+      ssl_config = {
+        "server": {
+          "http_tls_config": ssl_server,
+          "grpc_tls_config": ssl_server,
+        },
+        "frontend": {
+          "tail_tls_config": ssl_client,
+        },
+        "frontend_worker": {
+          "grpc_client_config": ssl_client,
+        },
+        "ingester_client": {
+          "grpc_client_config": ssl_client,
+        },
+        "compactor_grpc_client": ssl_client,
+      }
+      return dictupdate.update(copy.deepcopy(config_block), ssl_config, recursive_update=True, merge_lists=True)
+    else:
+      return config_block
 
 class GrafanaService(GrafanaAppService):
   def __init__(self, config):
