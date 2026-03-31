@@ -39,15 +39,20 @@ def run():
       ]
     }
 
-    # config_format = __salt__['pillar.get']( 'vector:config_format', "yaml")
-    config_format = 'yaml'
+    config_format = __salt__['pillar.get']('vector:config_format', "yaml")
+    valid_config_formats = ['yaml', 'toml', 'json']
 
-    if not(config_format in ['yaml', 'toml', 'json']):
+    if not(config_format in valid_config_formats):
       raise SaltRenderError(f"The format {config_format} is not valid! only json/toml/yaml are allowed.")
+
+    unused_config_formats = valid_config_formats.copy()
+    unused_config_formats.remove(config_format)
+
+    config_filename = f'/etc/vector/vector.{config_format}'
 
     config['vector_config'] = {
       'file.serialize': [
-        {'name':            f'/etc/vector/vector.{config_format}'},
+        {'name':            config_filename},
         {'user':            'root'},
         {'group':           'vector'},
         {'mode':            '0640'},
@@ -58,12 +63,34 @@ def run():
       ]
     }
 
+    for unused_config_format in unused_config_formats:
+      config[f'cleanup_vector_unused_config_{unused_config_format}'] = {
+        'file.absent': [
+          {'name': f'/etc/vector/vector.{unused_config_format}'},
+          {'require_in': ['vector_service']},
+        ]
+      }
+
+    vector_defaults = __salt__['pillar.get']('vector:environment', [])
+    vector_defaults.append(f"VECTOR_CONFIG_{config_format.upper()}={config_filename}")
+
+    config['vector_defaults'] = {
+      "file.managed": [
+        {'name':     '/etc/default/vector'},
+        {'user':     'root'},
+        {'group':    'root'},
+        {'mode':     '0640'},
+        {'require':  ['vector_packages'] },
+        {'contents': "\n".join(vector_defaults)},
+      ]
+    }
+
     config['vector_service'] = {
       'service.running': [
         {'name':    'vector.service'},
         {'reload':  True},
-        {'require': ['vector_config']},
-        {'watch':   ['vector_config']},
+        {'require': ['vector_config', 'vector_defaults']},
+        {'watch':   ['vector_config', 'vector_defaults']},
       ]
     }
 
