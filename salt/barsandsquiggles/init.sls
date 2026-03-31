@@ -21,7 +21,7 @@ import copy
 import salt.utils.dictupdate as dictupdate
 import logging
 
-log = logging.getLogger("barandsquiggles")
+log = logging.getLogger("barsandsquiggles")
 
 class GrafanaAppService:
   def __init__(self,config):
