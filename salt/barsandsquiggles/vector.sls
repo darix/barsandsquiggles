@@ -46,7 +46,7 @@ def run():
 
     config['vector_config'] = {
       'file.serialize': [
-        {'name':            f'/etc/vector/vector.{{ config_format }}'},
+        {'name':            f'/etc/vector/vector.{config_format}'},
         {'user':            'root'},
         {'group':           'vector'},
         {'mode':            '0640'},
