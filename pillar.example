@@ -162,6 +162,19 @@ vector:
   enabled: true
   enable_journal: true           # adds vector-systemd package
   enable_remote_journal: false   # adds vector-systemd-journal-remote package
+  #
+  # if you prefer the configuration in another format than yaml you can also set json or toml.
+  # default is yaml
+  #
+  # config_format: yaml
+  #
+  # optionally allow setting enviroment variables
+  # see vector's documentation
+  #
+  # you do not have to set VECTOR_CONFIG_{{ config_format }}=path as the code will do this automatically.
+  #
+  # environment:
+  #   - VECTOR_THREADS={{ grains.num_cpus / 2 }}
   config:
     sources:
       journald:
