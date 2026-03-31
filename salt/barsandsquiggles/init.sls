@@ -1,6 +1,6 @@
 #!py
 #
-# barandsquiggles
+# barsandsquiggles
 #
 # Copyright (C) 2025   darix
 #
@@ -220,27 +220,26 @@ class LokiService(GrafanaAppService):
     self.build_config()
 
   def merge_in_ssl_settings(self, config_block):
+    ssl_config = {}
     ssl_server = __salt__['pillar.get'](f"{self.appname}:tls:server", {})
     ssl_client = __salt__['pillar.get'](f"{self.appname}:tls:client", {})
     # log.error(f"server:{ssl_server} client:{ssl_client}")
-    if len(ssl_server) > 0 and len(ssl_client) > 0:
-      ssl_client["tls_enabled"] = True
-      ssl_config = {
-        "server": {
-          "http_tls_config": ssl_server,
-          "grpc_tls_config": ssl_server,
-        },
-        "frontend": {
-          "tail_tls_config": ssl_client,
-        },
-        "frontend_worker": {
-          "grpc_client_config": ssl_client,
-        },
-        "ingester_client": {
-          "grpc_client_config": ssl_client,
-        },
-        "compactor_grpc_client": ssl_client,
+
+    if len(ssl_server) > 0:
+      ssl_config["server"] = {
+        "http_tls_config": ssl_server,
+        "grpc_tls_config": ssl_server,
       }
+
+    if len(ssl_client) > 0:
+      if not("tls_enabled" in ssl_client):
+        ssl_client["tls_enabled"] = True
+      ssl_config["frontend"] =        { "tail_tls_config": ssl_client    }
+      ssl_config["frontend_worker"] = { "grpc_client_config": ssl_client }
+      ssl_config["ingester_client"] = { "grpc_client_config": ssl_client }
+      ssl_config["compactor_grpc_client"] = ssl_client
+
+    if len(ssl_config) > 0:
       return dictupdate.update(copy.deepcopy(config_block), ssl_config, recursive_update=True, merge_lists=True)
     else:
       return config_block
