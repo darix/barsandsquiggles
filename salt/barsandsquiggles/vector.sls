@@ -89,6 +89,7 @@ def run():
       'service.running': [
         {'name':    'vector.service'},
         {'reload':  True},
+        {'enable':  True},
         {'require': ['vector_config', 'vector_defaults']},
         {'watch':   ['vector_config', 'vector_defaults']},
       ]
