@@ -24,7 +24,7 @@ from salt.exceptions import SaltRenderError
 def run():
   config = {}
 
-  if __salt__['pillar.get']('vector:enabled', False):
+  if __salt__['pillar.get']('vector:enabled', True):
     vector_packages = ["vector"]
 
     if __salt__['pillar.get']('vector:enable_journal', False):
