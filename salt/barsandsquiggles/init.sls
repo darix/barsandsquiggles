@@ -227,18 +227,36 @@ class LokiService(GrafanaAppService):
     ssl_client = __salt__['pillar.get'](f"{self.appname}:tls:client", {})
     # log.error(f"server:{ssl_server} client:{ssl_client}")
 
+    ca_file           = __salt__['pillar.get'](f"{self.appname}:tls:ca_path", None)
+    tls_min_version   = __salt__['pillar.get'](f"{self.appname}:tls:tls_min_version",   "VersionTLS13")
+    tls_cipher_suites = __salt__['pillar.get'](f"{self.appname}:tls:tls_cipher_suites", "TLS_CHACHA20_POLY1305_SHA256")
+
+    if not("client_ca_file" in ssl_server):
+      ssl_server["client_ca_file"] = ca_file
+
     if len(ssl_server) > 0:
       ssl_config["server"] = {
         "http_tls_config": ssl_server,
         "grpc_tls_config": ssl_server,
+        "tls_min_version": tls_min_version,
+        "tls_cipher_suites": tls_cipher_suites,
       }
 
     if len(ssl_client) > 0:
-      grpc_client_ssl_config = ssl_client.copy()
-      grpc_client_ssl_config["tls_enabled"] = True
-
       if not("tls_server_name" in ssl_client):
         ssl_client["tls_server_name"] = __salt__['pillar.get'](f"{self.appname}:tls:tls_hostname", __salt__['grains.get']("id"))
+
+      if not("tls_ca_path" in ssl_client) and not(ca_file is None):
+        ssl_client["tls_ca_path"] = ca_file
+
+      if not("tls_cipher_suites" in ssl_client):
+        ssl_client["tls_cipher_suites"] = tls_cipher_suites
+
+      if not("tls_min_version" in ssl_client):
+        ssl_client["tls_min_version"] = tls_min_version
+
+      grpc_client_ssl_config = ssl_client.copy()
+      grpc_client_ssl_config["tls_enabled"] = True
 
       grpc_client_config_sections = [
         "ingester_client",
