@@ -91,6 +91,7 @@ class GrafanaAppService:
             {"enable":  True},
             {"reload":  True},
             {"require": service_deps},
+            {"watch":   service_deps},
             {"require_in": self.target_section},
           ]
         }
@@ -128,7 +129,8 @@ class GrafanaAppService:
             {"name":    f"{self.service_name}.service" },
             {"enable":  True},
             {"reload":  True},
-            {"require": self.service_deps}
+            {"require": self.service_deps},
+            {"watch":   self.service_deps},
           ]
         }
 
