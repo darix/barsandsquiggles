@@ -234,12 +234,38 @@ class LokiService(GrafanaAppService):
       }
 
     if len(ssl_client) > 0:
-      if not("tls_enabled" in ssl_client):
-        ssl_client["tls_enabled"] = True
-      ssl_config["frontend"] =        { "tail_tls_config": ssl_client    }
-      ssl_config["frontend_worker"] = { "grpc_client_config": ssl_client }
-      ssl_config["ingester_client"] = { "grpc_client_config": ssl_client }
-      ssl_config["compactor_grpc_client"] = ssl_client
+      grpc_client_ssl_config = ssl_client.copy()
+      grpc_client_ssl_config["tls_enabled"] = True
+
+      if not("tls_server_name" in ssl_client):
+        ssl_client["tls_server_name"] = __salt__['pillar.get'](f"{self.appname}:tls:tls_hostname", __salt__['grains.get']("id"))
+
+      grpc_client_config_sections = [
+        "ingester_client",
+        "query_scheduler",
+        "frontend",
+        "frontend_worker",
+      ]
+
+      for section in grpc_client_config_sections:
+        ssl_config[section] = { "grpc_client_config": grpc_client_ssl_config }
+
+      ssl_config["memberlist"] = grpc_client_ssl_config
+
+      ssl_config["frontend"]["tail_tls_config"] = ssl_client
+      ssl_config["storage_config"] = {
+        "tsdb_shipper": {
+          "index_gateway_client": {
+            "grpc_client_config": grpc_client_ssl_config
+          }
+        }
+      }
+      ssl_config["ruler"] = {
+        "ruler_client": grpc_client_ssl_config,
+        "evaluation": {
+          "query_frontend": grpc_client_ssl_config
+        }
+      }
 
     if len(ssl_config) > 0:
       return dictupdate.update(copy.deepcopy(config_block), ssl_config, recursive_update=True, merge_lists=True)
