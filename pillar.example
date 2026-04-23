@@ -159,10 +159,21 @@ grafana:
 # ---------------------------------------------------------------------------
 # Vector
 # ---------------------------------------------------------------------------
+#
+# some available includes
+#
+#   - barsandsquiggles.vector.base-config
+#   - barsandsquiggles.vector.local_journal
+#   - barsandsquiggles.vector.auditd
+#   - barsandsquiggles.vector.use-step-ca-generic-certificates
+#
 vector:
   enabled: true
   enable_journal: true           # adds vector-systemd package
   enable_remote_journal: false   # adds vector-systemd-journal-remote package
+  additional_groups:
+    - nginx
+    - valkey
   #
   # if you prefer the configuration in another format than yaml you can also set json or toml.
   # default is yaml
