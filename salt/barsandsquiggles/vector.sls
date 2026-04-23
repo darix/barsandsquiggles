@@ -19,6 +19,7 @@
 #
 
 from salt.exceptions import SaltRenderError
+from salt.utils.user import get_group_list
 
 
 def run():
@@ -84,6 +85,20 @@ def run():
         {'contents': "\n".join(vector_defaults)},
       ]
     }
+
+    vector_additional_groups = __salt__['pillar.get']('vector:additional_groups', [])
+    if len(vector_additional_groups) > 0:
+      vector_groups = get_group_list("vector")
+      vector_groups.extend(vector_additional_groups)
+      vector_groups = list(set(vector_groups))
+
+      config['vector_additional_groups'] = {
+        "user.present": [
+          {'name':       'vector'},
+          {'groups':     vector_groups},
+          {'require_in': ['vector_service']},
+        ]
+      }
 
     config['vector_service'] = {
       'service.running': [
