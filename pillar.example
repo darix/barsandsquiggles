@@ -201,3 +201,6 @@ vector:
           codec: json
         labels:
           host: "{{ host }}"
+    api:
+      enabled: true
+      address: "127.0.0.1:8686"
