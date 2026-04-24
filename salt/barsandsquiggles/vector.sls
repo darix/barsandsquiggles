@@ -100,13 +100,21 @@ def run():
         ]
       }
 
+    vector_service_requires = ['vector_config', 'vector_defaults']
+    vector_service_watch    = ['vector_config', 'vector_defaults']
+
+    additional_requires = __salt__['pillar.get']('vector:requires', [])
+    if len(additional_requires) > 0:
+      vector_service_requires.extend(additional_requires)
+      vector_service_requires = list(set(vector_service_requires))
+
     config['vector_service'] = {
       'service.running': [
         {'name':    'vector.service'},
         {'reload':  True},
         {'enable':  True},
-        {'require': ['vector_config', 'vector_defaults']},
-        {'watch':   ['vector_config', 'vector_defaults']},
+        {'require': vector_service_requires},
+        {'watch':   vector_service_watch},
       ]
     }
 

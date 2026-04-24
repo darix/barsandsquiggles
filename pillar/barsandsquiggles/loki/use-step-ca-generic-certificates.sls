@@ -1,3 +1,7 @@
+include:
+  - includes.step-ca-use-generic-host-cert
+  - includes.step-ca-use-generic-user-cert
+
 step:
   certificates:
     host:
@@ -18,6 +22,9 @@ step:
             - loki.service
 
 loki:
+  require:
+    - step_client_host_generic_acl_0
+    - step_client_user_generic_acl_0
   tls:
     server:
       cert_file: /etc/step/certs/generic.host.full.pem

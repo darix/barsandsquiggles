@@ -1,3 +1,7 @@
+include:
+  - includes.step-ca-use-generic-host-cert
+  - includes.step-ca-use-generic-user-cert
+
 step:
   certificates:
     host:
@@ -17,12 +21,7 @@ step:
         affected_services:
             - vector.service
 
-loki:
-  tls:
-    server:
-      cert_file: /etc/step/certs/generic.host.full.pem
-      key_file:  /etc/step/certs/generic.host.full.pem
-      client_auth_type: RequireAndVerifyClientCert
-    client:
-      tls_cert_path: /etc/step/certs/generic.user.full.pem
-      tls_key_path:  /etc/step/certs/generic.user.full.pem
+vector:
+  require:
+    - step_client_host_generic_acl_0
+    - step_client_user_generic_acl_0
