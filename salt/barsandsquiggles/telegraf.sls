@@ -21,6 +21,8 @@
 from salt.exceptions import SaltRenderError
 from salt.utils.user import get_group_list
 
+import os.path
+
 def run():
   config = {}
 
