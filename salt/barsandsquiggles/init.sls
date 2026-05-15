@@ -263,12 +263,14 @@ class LokiService(GrafanaAppService):
         "query_scheduler",
         "frontend",
         "frontend_worker",
+        "ingest_limits_frontend_client",
       ]
 
       for section in grpc_client_config_sections:
         ssl_config[section] = { "grpc_client_config": grpc_client_ssl_config }
 
       ssl_config["memberlist"] = grpc_client_ssl_config
+      ssl_config["compactor_grpc_client"] = grpc_client_ssl_config
 
       ssl_config["frontend"]["tail_tls_config"] = ssl_client
       ssl_config["storage_config"] = {
