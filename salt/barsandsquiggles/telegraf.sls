@@ -25,7 +25,7 @@ def run():
   config = {}
 
   telegraf_packages     = ['telegraf']
-  telegraf_config_dir   = '/etc/telegraf/telegraf.d'
+  telegraf_snippets_dir   = '/etc/telegraf/telegraf.d'
   telegraf_config_path  = '/etc/telegraf/telegraf.conf'
   telegraf_service_name = 'telegraf.service'
 
@@ -36,9 +36,9 @@ def run():
       ]
     }
 
-    config['telegraf_config_dir'] = {
+    config['telegraf_snippets_dir'] = {
       'file.directory': [
-        {'name': telegraf_config_dir},
+        {'name': telegraf_snippets_dir},
         {'user': 'root'},
         {'group': 'root'},
         {'mode':  '0755'},
@@ -52,12 +52,24 @@ def run():
         {'user': 'root'},
         {'group': 'root'},
         {'mode':  '0644'},
-        {'require': ['telegraf_packages', 'telegraf_config_dir']},
+        {'require': ['telegraf_packages', 'telegraf_snippets_dir']},
         {'dataset_pillar':  'telegraf:config'},
         {'serializer': 'toml'},
         {'serializer_opts': {'indent': 2}},
       ]
     }
+
+    if os.path.exists(telegraf_snippets_dir):
+      for filename in os.listdir(telegraf_snippets_dir):
+        full_path = os.path.join(telegraf_snippets_dir, filename)
+        config_section = f"telegraf_purge_unmanaged_snippet_{filename}"
+        config[config_section] = {
+            'file.absent': [
+              {'name': full_path },
+              {'require_in': ['telegraf_service']},
+              {'require':    ['telegraf_packages']},
+            ]
+          }
 
     config['telegraf_service'] = {
       'service.running': [
