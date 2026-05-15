@@ -1,6 +1,6 @@
 #!py
 #
-# thepostman
+# barsandsquiggles
 #
 # Copyright (C) 2026   darix
 #
