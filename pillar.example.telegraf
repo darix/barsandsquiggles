@@ -1,0 +1,11 @@
+#!toml
+include = ['barsandsquiggles.telegraf.base-config']
+
+[telegraf]
+enabled = true
+
+[telegraf.config.outputs.influxdb]
+  database = "telegraf"
+  urls = ["http://127.0.0.1:8086"]
+  username = "telegraf"
+  password = "pa$$word"
