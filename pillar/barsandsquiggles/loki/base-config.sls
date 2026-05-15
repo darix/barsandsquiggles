@@ -1,17 +1,27 @@
+{%- set loki_data_dir = "/var/lib/loki"       %}
+{%- set chunks_dir = loki_data_dir ~ "/chunks" %}
 loki:
   config:
+    analytics:
+      reporting_enabled: false
+
     common:
-      path_prefix: /var/lib/loki/data/
+      path_prefix: {{ loki_data_dir }}/data/
       replication_factor: 1
       ring:
         kvstore:
           store: memberlist
       storage:
         filesystem:
-          chunks_directory: /var/lib/loki/chunks
-          rules_directory:  /var/lib/loki/rules
+          chunks_directory: {{ chunks_dir }}
+          rules_directory:  {{ loki_data_dir }}/rules
+
     compactor:
-      working_directory: /var/lib/loki/compactor
+      working_directory: {{ loki_data_dir }}/compactor
+
+    storage_config:
+      filesystem:
+        directory: {{ chunks_dir }}
 
     query_range:
       results_cache:
