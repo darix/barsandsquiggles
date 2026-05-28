@@ -18,6 +18,11 @@
       timeouts:
         client: 150m
         server: 150m
+      {%- if protocol_name == "http" %}
+      httprequests:
+        - 'set-header Upgrade %[req.hdr(Upgrade)]'
+        - 'set-header Connection upgrade'
+      {%- endif %}
       servers:
         # for each node matching the target it will count up the loop index and append that to the server name
         loki-{{ protocol_name }}:
