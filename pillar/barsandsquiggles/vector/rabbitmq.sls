@@ -7,7 +7,7 @@ vector:
         type: "file"
         file_key: "file_path"
         include:
-        - /var/log/rabbitmq/rabbit\@*.log
+        - /var/log/rabbitmq/rabbit@*.log
 
     transforms:
       parsed_rabbitmq_log:
