@@ -99,6 +99,7 @@ def run():
         "user.present": [
           {'name':       'vector'},
           {'groups':     vector_groups},
+          {'require':    ['vector_config']},
           {'require_in': ['vector_service']},
           {'watch_in': ['vector_service']},
         ]
