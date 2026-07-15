@@ -61,11 +61,18 @@ def run():
 
     if len(vector_endpoint_configs) > 0:
       for sink_label, sink_data in vector_config_dict.get('sinks', {}).items():
-        sink_type = sink_data.get('type')
-        if not(sink_type is None):
-          endpoint_config = vector_endpoint_configs.get(sink_type, {})
-          if len(endpoint_config) > 0:
-            vector_config_dict['sinks'][sink_label] = deepmerge(endpoint_config, sink_data)
+        new_config = sink_data
+
+        for config_key in ['type', 'endpoint_config']:
+          if config_key in sink_data:
+            endpoint_config = vector_endpoint_configs.get(sink_data.get(config_key), {})
+            if len(endpoint_config) > 0:
+              new_config = deepmerge(endpoint_config, new_config)
+
+        if 'endpoint_config' in new_config:
+          a.pop('endpoint_config')
+
+        vector_config_dict['sinks'][sink_label] = new_config
 
     config['vector_config'] = {
       'file.serialize': [
