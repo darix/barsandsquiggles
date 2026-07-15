@@ -21,6 +21,11 @@
 from salt.exceptions import SaltRenderError
 from salt.utils.user import get_group_list
 
+import copy
+import salt.utils.dictupdate as dictupdate
+
+def deepmerge(current_config, additional_config):
+    return dictupdate.update(copy.deepcopy(current_config), copy.deepcopy(additional_config), merge_lists=True)
 
 def run():
   config = {}
@@ -51,6 +56,17 @@ def run():
 
     config_filename = f'/etc/vector/vector.{config_format}'
 
+    vector_config_dict      = __salt__['pillar.get']('vector:config', {})
+    vector_endpoint_configs = __salt__['pillar.get']('vector:endpoints', {})
+
+    if len(vector_endpoint_configs) > 0:
+      for sink_label, sink_data in vector_config_dict.get('sinks', {}).items():
+        sink_type = sink_data.get('type')
+        if not(sink_type is None):
+          endpoint_config = vector_endpoint_configs.get(sink_type, {})
+          if len(endpoint_config) > 0:
+            vector_config_dict['sinks'][sink_label] = deepmerge(endpoint_config, sink_data)
+
     config['vector_config'] = {
       'file.serialize': [
         {'name':            config_filename},
@@ -58,7 +74,7 @@ def run():
         {'group':           'vector'},
         {'mode':            '0640'},
         {'require':         ['vector_packages'] },
-        {'dataset_pillar':  'vector:config'},
+        {'dataset':         vector_config_dict},
         {'serializer':      config_format},
         {'serializer_opts': {'indent': 2}},
       ]

@@ -175,6 +175,11 @@ vector:
   additional_groups:
     - nginx
     - valkey
+  endpoints:
+    loki:
+        endpoint: http://localhost:3100
+        encoding:
+          codec: json
   #
   # if you prefer the configuration in another format than yaml you can also set json or toml.
   # default is yaml
@@ -197,9 +202,6 @@ vector:
         type: loki
         inputs:
           - journald
-        endpoint: http://localhost:3100
-        encoding:
-          codec: json
         labels:
           host: "{{ host }}"
     api:
