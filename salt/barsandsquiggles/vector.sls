@@ -70,7 +70,7 @@ def run():
               new_config = deepmerge(endpoint_config, new_config)
 
         if 'endpoint_config' in new_config:
-          a.pop('endpoint_config')
+          new_config.pop('endpoint_config')
 
         vector_config_dict['sinks'][sink_label] = new_config
 
