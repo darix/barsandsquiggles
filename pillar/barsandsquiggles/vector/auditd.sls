@@ -17,5 +17,5 @@ vector:
           - source_audit_log
         source: |-
           . = merge(., parse_regex!(.message, r'\Atype=(?P<type>\S+)\s+msg=audit\((?P<unix_timestamp>\d+\.\d+):(?P<pid>\d+)\):\s+(?P<message>.*)\z'))
-          . = merge(., parse_logfmt!(.audit_message))
+          . = merge(., parse_logfmt!(.message))
           .timestamp = from_unix_timestamp!(value:  to_int(to_float!(.unix_timestamp)*1000), unit: "milliseconds")
