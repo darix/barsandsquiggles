@@ -8,8 +8,7 @@ vector:
     sources:
       source_postgresql_json:
         type: file
-        include:
-          - /srv/patroni/*/data/log/*.json
+
 
     transforms:
       parsed_postgresql_json:
