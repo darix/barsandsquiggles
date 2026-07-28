@@ -34,11 +34,15 @@ class GrafanaAppService:
 
     self.service_deps = []
 
+  def deepcopy(self, oldconfig, newconfig):
+    return dictupdate.update(copy.deepcopy(oldconfig), newconfig, recursive_update=True, merge_lists=True)
+
   def setup_names(self):
     self.package_section = f"{self.appname}_packages"
     self.config_section = f"{self.appname}_config"
     self.service_section = f"{self.appname}_service"
     self.target_section = f"{self.appname}_target"
+    self.rules_section = f"{self.appname}_rules"
 
   def build_config(self):
     if self.appname in __pillar__ and __pillar__[self.appname].get("enabled", True):
@@ -68,6 +72,7 @@ class GrafanaAppService:
         service_section = f"{self.service_section}_{instance_name}"
         config_section = f"{self.config_section}_{instance_name}"
         config_path    = f"{self.config_dir}/{instance_name}.yaml"
+        # TODO: implement rules per instance support
 
         service_deps = self.service_deps.copy()
         service_deps.append(config_section)
@@ -107,9 +112,16 @@ class GrafanaAppService:
         service_section = f"{self.service_section}"
         config_section = f"{self.config_section}"
         config_path    = f"{self.config_dir}/{self.default_config_filename}.yaml"
+        rules_section  = f"{self.rules_section}"
 
         service_deps = self.service_deps.copy()
         service_deps.append(config_section)
+
+        config_dataset = self.merge_in_ssl_settings(__salt__['pillar.get'](f"{self.appname}:config", {}))
+        rules = {}
+        if 'rules' in config_dataset:
+          rules = config_dataset.pop('rules')
+        rules_path = config_dataset.get('ruler', {}).get('rule_path', ' /etc/loki/rules.yaml')
 
         self.config[config_section] = {
           'file.serialize': [
@@ -118,11 +130,27 @@ class GrafanaAppService:
             {'group':           self.appname},
             {'mode':            '0640'},
             {'require':         requires },
-            {'dataset':         self.merge_in_ssl_settings(__salt__['pillar.get'](f"{self.appname}:config", {}))},
+            {'dataset':         config_dataset},
             {'serializer':      'yaml'},
             {'serializer_opts': {'indent': 2}},
           ]
         }
+
+        if len(rules) > 0:
+          rules_dataset = self.deepcopy({'namespace': 'rules'}, rules)
+          self.config[rules_section] = {
+            'file.serialize': [
+              {'name':            rules_path},
+              {'user':            'root'},
+              {'group':           self.appname},
+              {'mode':            '0640'},
+              {'require':         requires },
+              {'dataset':         rules_dataset},
+              {'serializer':      'yaml'},
+              {'serializer_opts': {'indent': 2}},
+            ]
+          }
+          service_deps.append(rules_section)
 
         self.config[service_section] = {
           "service.running": [
@@ -292,7 +320,7 @@ class LokiService(GrafanaAppService):
       }
 
     if len(ssl_config) > 0:
-      return dictupdate.update(copy.deepcopy(config_block), ssl_config, recursive_update=True, merge_lists=True)
+      return self.deepcopy(config_block, ssl_config)
     else:
       return config_block
 

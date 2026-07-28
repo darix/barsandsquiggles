@@ -30,6 +30,13 @@ loki:
             enabled: true
             max_size_mb: 100
 
+    ruler:
+      storage:
+        type: local
+        local:
+          directory: /var/lib/loki/rules
+      rule_path: /etc/loki/rules.yaml
+
     limits_config:
       metric_aggregation_enabled: true
       enable_multi_variant_queries: true
