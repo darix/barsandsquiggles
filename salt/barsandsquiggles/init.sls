@@ -350,6 +350,34 @@ class GrafanaService(GrafanaAppService):
 
     watch_list = [self.config_section]
 
+    additional_configs = __salt__['pillar.get'](f"{self.appname}:additional_configs", {})
+
+    for filename, config_settings in additional_configs.items():
+      ac_section = f"{self.appname}_additional_config_{filename}"
+      ac_settings = [
+        {'name': filename},
+        {'user':  config_settings.get('user', 'root')},
+        {'group': config_settings.get('group', self.appname)},
+        {'mode':  config_settings.get('mode', '0640')},
+        {'require': requires},
+      ]
+
+      if "dataset" in config_settings and "format" in config_settings:
+        deploy_mode = "file.serialize"
+        ac_settings.append({'dataset':    config_settings['dataset']})
+        ac_settings.append({'serializer': config_settings['format']})
+        ac_settings.append({'serializer_opts': {'indent': 2}})
+      elif "contents" in config_settings:
+        deploy_mode = "file.managed"
+        ac_settings.append({'contents': config_settings['contents']})
+      else:
+        # TODO: Throw exception here?
+        deploy_mode = "file.managed"
+        ac_settings.append({'contents': "# You did not follow the pillar.example correctly"})
+
+      self.config[ac_section] = { deploy_mode: ac_settings }
+      watch_list.append(ac_section)
+
     datasources = __salt__['pillar.get'](f"{self.appname}:provisioning:datasources", {})
     for ds_name, ds_config in datasources.items():
       ds_section = f"{self.appname}_provisioning_datasource_{ds_name}"
