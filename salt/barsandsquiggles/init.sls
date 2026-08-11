@@ -121,7 +121,7 @@ class GrafanaAppService:
         rules = {}
         if 'rules' in config_dataset:
           rules = config_dataset.pop('rules')
-        rules_path = config_dataset.get('ruler', {}).get('rule_path', ' /etc/loki/rules.yaml')
+        rules_path = config_dataset.get('ruler', {}).get('rule_path', '/etc/loki/rules.yaml')
 
         self.config[config_section] = {
           'file.serialize': [
