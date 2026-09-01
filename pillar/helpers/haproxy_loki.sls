@@ -56,6 +56,6 @@
 {%- endmacro %}
 
 {%- macro haproxy_loki_listen(mine_target, mine_function, proxy_protocol_http_listen_port=global_proxy_protocol_http_listen_port, non_proxy_protocol_http_listen_port=global_non_proxy_protocol_http_listen_port, proxy_protocol_grpc_listen_port=global_proxy_protocol_grpc_listen_port, non_proxy_protocol_grpc_listen_port=global_non_proxy_protocol_grpc_listen_port, bind_ips=global_bind_ips) %}
-{{ haproxy_loki_http_listen(mine_target=mine_target, mine_function=mine_function, proxy_protocol_listen_port=proxy_protocol_http_listen_port, non_proxy_protocol_listen_port=non_proxy_protocol_http_listen_port, bind_ips=bind_ips) }}
-{{ haproxy_loki_grpc_listen(mine_target=mine_target, mine_function=mine_function, proxy_protocol_listen_port=proxy_protocol_grpc_listen_port, non_proxy_protocol_listen_port=non_proxy_protocol_grpc_listen_port, bind_ips=bind_ips) }}
+{{ haproxy_loki_http_listen(mine_target=mine_target, mine_function=mine_function, target_port=target_port, proxy_protocol_listen_port=proxy_protocol_listen_port, non_proxy_protocol_listen_port=non_proxy_protocol_listen_port, bind_ips=bind_ips) }}
+{{ haproxy_loki_grpc_listen(mine_target=mine_target, mine_function=mine_function, target_port=target_port, proxy_protocol_listen_port=proxy_protocol_listen_port, non_proxy_protocol_listen_port=non_proxy_protocol_listen_port, bind_ips=bind_ips) }}
 {%- endmacro %}
