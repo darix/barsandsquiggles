@@ -57,7 +57,7 @@ def run():
         {'require': ['telegraf_packages', 'telegraf_snippets_dir']},
         {'dataset_pillar':  'telegraf:config'},
         {'serializer': 'toml'},
-        {'serializer_opts': {'indent': 2}},
+        {'serializer_opts': [{'indent': 2}]},
       ]
     }
 

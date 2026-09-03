@@ -86,7 +86,7 @@ class GrafanaAppService:
             {'require':         requires },
             {'dataset':         self.merge_in_ssl_settings(instance_config)},
             {'serializer':      'yaml'},
-            {'serializer_opts': {'indent': 2}},
+            {'serializer_opts': [{'indent': 2}]},
           ]
         }
 
@@ -132,7 +132,7 @@ class GrafanaAppService:
             {'require':         requires },
             {'dataset':         config_dataset},
             {'serializer':      'yaml'},
-            {'serializer_opts': {'indent': 2}},
+            {'serializer_opts': [{'indent': 2}]},
           ]
         }
 
@@ -147,7 +147,7 @@ class GrafanaAppService:
               {'require':         requires },
               {'dataset':         rules_dataset},
               {'serializer':      'yaml'},
-              {'serializer_opts': {'indent': 2}},
+              {'serializer_opts': [{'indent': 2}]},
             ]
           }
           service_deps.append(rules_section)
@@ -366,7 +366,7 @@ class GrafanaService(GrafanaAppService):
         deploy_mode = "file.serialize"
         ac_settings.append({'dataset':    config_settings['dataset']})
         ac_settings.append({'serializer': config_settings['format']})
-        ac_settings.append({'serializer_opts': {'indent': 2}})
+        ac_settings.append({'serializer_opts': [{'indent': 2}]})
       elif "contents" in config_settings:
         deploy_mode = "file.managed"
         ac_settings.append({'contents': config_settings['contents']})
@@ -390,7 +390,7 @@ class GrafanaService(GrafanaAppService):
           {'require':         [self.package_section]},
           {'dataset':         ds_config},
           {'serializer':      'yaml'},
-          {'serializer_opts': {'indent': 2}},
+          {'serializer_opts': [{'indent': 2}]},
         ]
       }
       watch_list.append(ds_section)
@@ -407,7 +407,7 @@ class GrafanaService(GrafanaAppService):
           {'require':         [self.package_section]},
           {'dataset':         db_data.get('config', {})},
           {'serializer':      'yaml'},
-          {'serializer_opts': {'indent': 2}},
+          {'serializer_opts': [{'indent': 2}]},
         ]
       }
       watch_list.append(db_config_section)

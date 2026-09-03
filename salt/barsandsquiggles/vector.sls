@@ -83,7 +83,7 @@ def run():
         {'require':         ['vector_packages'] },
         {'dataset':         vector_config_dict},
         {'serializer':      config_format},
-        {'serializer_opts': {'indent': 2}},
+        {'serializer_opts': [{'indent': 2}]},
       ]
     }
 
