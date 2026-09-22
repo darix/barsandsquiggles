@@ -3,13 +3,16 @@ vector:
     sources:
       apache_access_logs_common:
         type: file
+        file_key: "file_path"
         include: []
       apache_access_logs_combined:
         type: file
+        file_key: "file_path"
         include:
         - /var/log/apache2/access_log
       apache_error_logs:
         type: file
+        file_key: "file_path"
         include:
           - /var/log/apache2/error_log
 
