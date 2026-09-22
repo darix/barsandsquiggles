@@ -19,18 +19,18 @@ vector:
         inputs:
           - apache_access_logs_common
         source: |-
-          . = parse_apache_logs!(.message, format: "common")
+          . = parse_apache_log!(.message, format: "common")
 
       parsed_apache_access_logs_combined:
         type: remap
         inputs:
           - apache_access_logs_combined
         source: |-
-          . = parse_apache_logs!(.message, format: "combined")
+          . = parse_apache_log!(.message, format: "combined")
 
       parsed_apache_error_logs:
         type: remap
         inputs:
           - apache_error_logs
         source: |-
-          . = parse_apache_logs!(.message, format: "error")
+          . = parse_apache_log!(.message, format: "error")
