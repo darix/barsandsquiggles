@@ -1,4 +1,6 @@
 vector:
+  acl_directories:
+    /var/log/apache2/: {}
   config:
     sources:
       apache_access_logs_common:
