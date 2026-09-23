@@ -134,17 +134,22 @@ def run():
 
     for path, options in vector_acl_directories.items():
       acl_section = f"vector_group_acl_{path}"
+      acl_settings = [
+        {'name':       path},
+        {'acl_name':   'vector'},
+        {'perms':      'rX'},
+        {'require':    ['vector_config']},
+        {'require_in': ['vector_service']},
+        {'watch_in':   ['vector_service']},
+        {'recurse':    options.get('recurse', False)},
+      ]
+
       config[acl_section] = {
-        "acl.present": [
-          {'name':       path},
-          {'acl_type':   'group'},
-          {'acl_name':   'vector'},
-          {'perms':      'rX'},
-          {'require':    ['vector_config']},
-          {'require_in': ['vector_service']},
-          {'watch_in':   ['vector_service']},
-          {'recurse':    options.get('recurse', False)},
-        ]
+        "acl.present": [{'acl_type': 'group'}].extend(acl_settings)
+      }
+
+      config[f"default_{acl_section}"] = {
+        "acl.present": [{'acl_type': 'd:group'}].extend(acl_settings)
       }
 
     additional_requires = __salt__['pillar.get']('vector:requires', [])
