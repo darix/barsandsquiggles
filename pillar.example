@@ -225,8 +225,9 @@ vector:
   use_hardened_service: false    # use hardened-vector.service instead of vector.service
   acl_directories:
     /var/log/apache2: {}
+    # default for recurse is true
     /var/log/nginx:
-      recurse: True
+      recurse: False
   additional_groups:
     - nginx
     - valkey

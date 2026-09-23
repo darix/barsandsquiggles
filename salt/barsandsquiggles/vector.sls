@@ -141,7 +141,7 @@ def run():
         {'require':    ['vector_config']},
         {'require_in': ['vector_service']},
         {'watch_in':   ['vector_service']},
-        {'recurse':    options.get('recurse', False)},
+        {'recurse':    options.get('recurse', True)},
       ]
 
       config[acl_section] = {
