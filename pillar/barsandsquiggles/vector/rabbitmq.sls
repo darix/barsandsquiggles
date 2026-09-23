@@ -1,13 +1,15 @@
+{%- set rabbitmq_logdir = '/var/log/rabbitmq' %}
+
 vector:
-  additional_groups:
-    - rabbitmq
+  acl_directories:
+    {{ rabbitmq_logdir }}/: {}
   config:
     sources:
       source_rabbitmq_log:
         type: "file"
         file_key: "file_path"
         include:
-        - /var/log/rabbitmq/rabbit@*.log
+        - {{ rabbitmq_logdir }}/rabbit@*.log
 
     transforms:
       parsed_rabbitmq_log:
