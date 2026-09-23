@@ -223,6 +223,10 @@ vector:
   enable_journal: true           # adds vector-systemd package
   enable_remote_journal: false   # adds vector-systemd-journal-remote package
   use_hardened_service: false    # use hardened-vector.service instead of vector.service
+  acl_directories:
+    /var/log/apache2: {}
+    /var/log/nginx:
+      recurse: True
   additional_groups:
     - nginx
     - valkey

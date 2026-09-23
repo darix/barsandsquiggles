@@ -130,6 +130,23 @@ def run():
       vector_service_watch.append('vector_additional_groups')
       vector_service_requires.append('vector_additional_groups')
 
+    vector_acl_directories = __salt__['pillar.get']('vector:acl_directories', {})
+
+    for path, options in vector_acl_directories.items():
+      acl_section = f"vector_group_acl_{path}"
+      config[acl_section] = {
+        "acl.present": [
+          {'name':       path},
+          {'acl_type':   'group'},
+          {'acl_name':   'vector'},
+          {'perms':      'rX'},
+          {'require':    ['vector_config']},
+          {'require_in': ['vector_service']},
+          {'watch_in':   ['vector_service']},
+          {'recurse':    options.get('recurse', False)},
+        ]
+      }
+
     additional_requires = __salt__['pillar.get']('vector:requires', [])
     if len(additional_requires) > 0:
       vector_service_requires.extend(additional_requires)
