@@ -1,6 +1,6 @@
 vector:
-  additional_groups:
-    - audit
+  acl_directories:
+    /var/log/audit/: {}
   config:
     sources:
       source_audit_log:
