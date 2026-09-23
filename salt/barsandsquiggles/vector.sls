@@ -144,13 +144,13 @@ def run():
         {'recurse':    options.get('recurse', True)},
       ]
 
-      config[acl_section] = {
-        "acl.present": [{'acl_type': 'group'}].extend(acl_settings)
-      }
+      active_acl_settings = [{'acl_type': 'group'}]
+      active_acl_settings.extend(acl_settings)
+      config[acl_section] = { "acl.present": active_acl_settings }
 
-      config[f"default_{acl_section}"] = {
-        "acl.present": [{'acl_type': 'd:group'}].extend(acl_settings)
-      }
+      default_acl_settings = [{'acl_type': 'd:group'}]
+      default_acl_settings.extend(acl_settings)
+      config[f"default_{acl_section}"] = { "acl.present": default_acl_settings }
 
     additional_requires = __salt__['pillar.get']('vector:requires', [])
     if len(additional_requires) > 0:
