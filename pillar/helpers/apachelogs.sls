@@ -1,17 +1,17 @@
 {%- macro apache_logs_sources(common_logs=[], combined_logs=['/var/log/apache2/access_log'], error_logs=['/var/log/apache2/error_log']) %}
-{%- if common_logs|len > 0 %}
+{%- if len(common_logs) > 0 %}
       apache_access_logs_common:
         type: file
         file_key: "file_path"
         include: {{ common_logs }}
 {%- endif %}
-{%- if combined_logs|len > 0 %}
+{%- if len(combined_logs) > 0 %}
       apache_access_logs_combined:
         type: file
         file_key: "file_path"
         include: {{ combined_logs }}
 {%- endif %}
-{%- if error_logs|len > 0 %}
+{%- if len(error_logs) > 0 %}
       apache_error_logs:
         type: file
         file_key: "file_path"
@@ -20,7 +20,7 @@
 {%- endmacro %}
 
 {%- macro apache_logs_transforms(common_logs=[], combined_logs=['/var/log/apache2/access_log'], error_logs=['/var/log/apache2/error_log']) %}
-{%- if common_logs|len > 0 %}
+{%- if len(common_logs) > 0 %}
       parsed_apache_access_logs_common:
         type: remap
         inputs:
@@ -28,7 +28,7 @@
         source: |-
           . = merge(., parse_apache_log!(.message, format: "common"))
 {%- endif %}
-{%- if combined_logs|len > 0 %}
+{%- if len(combined_logs) > 0 %}
       parsed_apache_access_logs_combined:
         type: remap
         inputs:
@@ -36,7 +36,7 @@
         source: |-
           . = merge(., parse_apache_log!(.message, format: "combined"))
 {%- endif %}
-{%- if error_logs|len > 0 %}
+{%- if len(error_logs) > 0 %}
       parsed_apache_error_logs:
         type: remap
         inputs:
