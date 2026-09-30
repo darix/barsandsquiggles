@@ -38,4 +38,4 @@ vector:
         inputs:
           - apache_error_logs
         source: |-
-          . = merge(., parse_apache_log!(.message, format: "error"))
+          . = merge(., parse_apache_log!(.message, format: "error", timestamp_format: "%a %b %d %T%.6f %Y"))
