@@ -67,11 +67,12 @@
         inputs:
           - apache_access_logs_logfmt
 # Expects the following LogFormat line
-# LogFormat "host=%h request_id=%{X-Request-ID}i user=%u timestamp=%t method=%m path=\"%U\" protocol=%H status=%>s size=%b referrer=\"%{Referer}i\" agent=u\"%{User-agent}i\"" logfmt_easier_to_parse
+# LogFormat "host=%h request_id=%{X-Request-ID}i user=%u timestamp=%{%FT%T}t.%{usec_frac}t%{%z}t method=%m path=\"%U\" protocol=%H status=%>s size=%b referrer=\"%{Referer}i\" agent=\"%{User-agent}i\"" logfmt_apache
 
         source: |-
           . = merge(., parse_logfmt!(.message))
           .message = to_string(.request_id) + " " + to_string(.method) + " " + to_string(.path) + " " + to_string(.protocol) + " " + to_string(.status) + " " + to_string(.size);
+          .timestamp = parse_timestamp(.timestamp, format: "%FT%T%.6f%z")
 {%- endif %}
 {%- if json_logs | length > 0 %}
       parsed_apache_access_logs_json:
