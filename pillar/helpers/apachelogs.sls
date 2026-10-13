@@ -66,10 +66,12 @@
         type: remap
         inputs:
           - apache_access_logs_logfmt
+# Expects the following LogFormat line
+# LogFormat "host=%h request_id=%{X-Request-ID}i user=%u timestamp=%t method=%m path=\"%U\" protocol=%H status=%>s size=%b referrer=\"%{Referer}i\" agent=u\"%{User-agent}i\"" logfmt_easier_to_parse
+
         source: |-
           . = merge(., parse_logfmt!(.message))
-          # this regexp is stolen from vendor/vrl/src/stdlib/log_util.rs line 49-55 from REGEX_APACHE_COMBINED_LOG
-          . = merge(., parse_regex!(.message, r'(-|"(-|(\s*(?P<message>((?P<method>\w+)\s+(?P<path>[[\\"][^"]]*?)\s+(?P<protocol>[[\\"][^"]]*?)\s*|[[\\"][^"]]*?))\s*))")'))
+          .message = to_string(.request_id) + " " + to_string(.method) + " " + to_string(.path) + " " + to_string(.protocol) + " " + to_string(.status) + " " + to_string(.size);
 {%- endif %}
 {%- if json_logs | length > 0 %}
       parsed_apache_access_logs_json:
