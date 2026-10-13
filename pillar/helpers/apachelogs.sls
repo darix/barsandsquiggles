@@ -66,11 +66,13 @@
         type: remap
         inputs:
           - apache_access_logs_logfmt
+{%- raw %}
 # Expects the following LogFormat line
-# LogFormat "host=%h request_id=%{X-Request-ID}i user=%u timestamp=%{%FT%T}t.%{usec_frac}t%{%z}t method=%m path=\"%U\" protocol=%H status=%>s size=%b referrer=\"%{Referer}i\" agent=\"%{User-agent}i\"" logfmt_apache
-
+# LogFormat "host=%h request_id=%{X-Request-ID}i user=%u timestamp=%{%FT%T}t.%{usec_frac}t%{%z}t message=\"%r\" status=%>s size=%b referrer=\"%{Referer}i\" agent=\"%{User-agent}i\"" logfmt_apache
+{%- endraw %}
         source: |-
           . = merge(., parse_logfmt!(.message))
+          . = merge(., parse_regex!(.message, r'(-|"(-|(\s*(?P<message>((?P<method>\w+)\s+(?P<path>[[\\"][^"]]*?)\s+(?P<protocol>[[\\"][^"]]*?)\s*|[[\\"][^"]]*?))\s*))")')
           .message = to_string(.request_id) + " " + to_string(.method) + " " + to_string(.path) + " " + to_string(.protocol) + " " + to_string(.status) + " " + to_string(.size);
           .timestamp = parse_timestamp(.timestamp, format: "%FT%T%.6f%z")
 {%- endif %}
