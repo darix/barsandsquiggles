@@ -1,3 +1,5 @@
+# TODO: maybe incorporate the log parsing steps that eli did for gitea
+
 {%- macro apache_logs_sources(common_logs=[], combined_logs=['/var/log/apache2/access_log'], error_logs=['/var/log/apache2/error_log'], logfmt_logs=[], json_logs=[]) %}
 {%- if common_logs | length > 0 %}
       apache_access_logs_common:
@@ -66,6 +68,8 @@
           - apache_access_logs_logfmt
         source: |-
           . = merge(., parse_logfmt!(.message))
+          # this regexp is stolen from vendor/vrl/src/stdlib/log_util.rs line 49-55 from REGEX_APACHE_COMBINED_LOG
+          . = merge(., parse_regex!(.message, r'(-|"(-|(\s*(?P<message>((?P<method>\w+)\s+(?P<path>[[\\"][^"]]*?)\s+(?P<protocol>[[\\"][^"]]*?)\s*|[[\\"][^"]]*?))\s*))")'))
 {%- endif %}
 {%- if json_logs | length > 0 %}
       parsed_apache_access_logs_json:
