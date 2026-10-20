@@ -70,6 +70,7 @@ def run():
               {'name': full_path },
               {'require_in': ['telegraf_service']},
               {'require':    ['telegraf_packages']},
+              {'watch_in':   ['telegraf_service']},
             ]
           }
 
@@ -78,6 +79,7 @@ def run():
         {'name': telegraf_service_name},
         {'enable': True},
         {'require': ['telegraf_config']},
+        {'watch': ['telegraf_config']},
       ]
     }
 
