@@ -121,7 +121,7 @@ class GrafanaAppService:
         rules = {}
         if 'rules' in config_dataset:
           rules = config_dataset.pop('rules')
-        rules_path = config_dataset.get('ruler', {}).get('rule_path', '/etc/loki/rules.yaml')
+        rules_path = config_dataset.get('ruler', {}).get('rule_path', '/etc/loki/rules.d/')
 
         self.config[config_section] = {
           'file.serialize': [
@@ -140,7 +140,7 @@ class GrafanaAppService:
           rules_dataset = self.deepcopy({'namespace': 'rules'}, rules)
           self.config[rules_section] = {
             'file.serialize': [
-              {'name':            rules_path},
+              {'name':            f"{rules_path}/rules.yaml"},
               {'user':            'root'},
               {'group':           self.appname},
               {'mode':            '0640'},
