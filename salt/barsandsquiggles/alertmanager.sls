@@ -39,6 +39,7 @@ def run():
         {'pkgs': alertmanager_packages},
       ]
     }
+
     config['alertmanager_config'] = {
       'file.serialize': [
         {'name': alertmanager_config_path},
@@ -55,8 +56,10 @@ def run():
     template_list = []
     alertmanager_template_prefix = 'alertmanager:templates'
     alertmanager_templates_data = __salt__['pillar.get'](alertmanager_template_prefix, {})
+
     if len(alertmanager_templates_data) > 0:
       names_data = []
+
       for template_name, template_data in alertmanager_templates_data.items():
         template_filename = f"{alertmanager_templates_dir}/{template_name}"
         template_list.append(template_filename)
@@ -64,6 +67,7 @@ def run():
         names_data.append({
           template_filename: [{'contents': template_data}]
         })
+
       config[f'alertmanager_templates'] = {
         'file.managed': [
           {'user': 'root'},
@@ -110,6 +114,7 @@ def run():
         {'require': ['alertmanager_service']}
       ]
     }
+
     if os.path.exists(alertmanager_templates_dir):
       for filename in os.listdir(alertmanager_templates_dir):
         full_path = os.path.join(alertmanager_templates_dir, filename)
@@ -121,6 +126,7 @@ def run():
               {'require_in':    ['alertmanager_packages']},
             ]
           }
+
     config['alertmanager_packages'] = {
       'pkg.purged': [
         {'pkgs': alertmanager_packages},
