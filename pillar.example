@@ -58,6 +58,15 @@ loki:
           index:
             prefix: index_
             period: 24h
+    ruler:
+      alertmanager_url: http://localhost:9093/
+      storage:
+        type: s3
+        s3:
+          s3: https://{{ 'garage/loki/key_id' | gopass }}:{{ 'garage/loki/secret_key' | gopass }}@garagehost:3900/loki/
+          s3forcepathstyle: true
+          region: eu-west-1
+          insecure: false
 
 # ---------------------------------------------------------------------------
 # Tempo
