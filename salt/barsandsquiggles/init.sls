@@ -137,21 +137,27 @@ class GrafanaAppService:
         }
 
         if len(rules) > 0:
-          rules_dataset = self.deepcopy({'namespace': 'rules'}, rules)
-          rules_file_path = f"{rules_path}/rules.yaml"
-          self.config[rules_section] = {
-            'file.serialize': [
-              {'name':            rules_file_path},
-              {'user':            'root'},
-              {'group':           self.appname},
-              {'mode':            '0640'},
-              {'require':         requires },
-              {'dataset':         rules_dataset},
-              {'serializer':      'yaml'},
-              {'serializer_opts': [{'indent': 2}]},
-            ]
-          }
-          # service_deps.append(rules_section)
+          rule_files = []
+          for namespace, ruleset in rules.items():
+            rules_dataset = self.deepcopy({'namespace': namespace}, ruleset)
+            rules_file_path = f"{rules_path}/{namespace}.yaml"
+            local_rule_section = f"{rules_section}_{namespace}"
+            self.config[local_rule_section] = {
+              'file.serialize': [
+                {'name':            rules_file_path},
+                {'user':            'root'},
+                {'group':           self.appname},
+                {'mode':            '0640'},
+                {'require':         requires },
+                {'dataset':         rules_dataset},
+                {'serializer':      'yaml'},
+                {'serializer_opts': [{'indent': 2}]},
+                {'onchanges_in':    ["lokitool_sync_rules"]},
+                {'require_in':      ["lokitool_sync_rules"]},
+              ]
+            }
+            rule_files.append(rules_file_path)
+            # service_deps.append(rules_section)
 
           http_listen_address = config_dataset['server']['http_listen_address']
           http_listen_port    = config_dataset['server']['http_listen_port']
@@ -161,13 +167,13 @@ class GrafanaAppService:
             http_protocol       = 'http'
 
           loki_address = f"{http_protocol}://{http_listen_address}:{http_listen_port}"
+
           self.config["lokitool_sync_rules"] = {
             'cmd.run': [
-              {'name': f" lokitool rules sync --address={loki_address} --id=1 --rule-files={rules_file_path}"},
-              {'require': [rules_section, service_section]},
-              {'onchanges': [rules_section]},
+              {'name': f" lokitool rules sync --address={loki_address} --id=1 {' '.join(rule_files)}"},
+              {'require': [service_section]},
             ]
-          }
+        }
 
         self.config[service_section] = {
           "service.running": [

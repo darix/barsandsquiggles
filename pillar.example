@@ -24,16 +24,17 @@ loki:
   config:
     rules:
       {% raw %}
-      groups:
-          - name: apparmor_denied
-            rules:
-              - alert: apparmor_denied
-                expr: (sum by (host)(count_over_time({service_name="auditd"} | json | ( type="AVC" , apparmor="DENIED" )[1m])) > 0)
-                labels:
-                  service: apparmor
-                  severity: critical
-                annotations:
-                  message: Apparmor Denied woohoo {{ $labels.hostname }}
+      apparmor:
+        groups:
+            - name: apparmor_denied
+              rules:
+                - alert: apparmor_denied
+                  expr: (sum by (host)(count_over_time({service_name="auditd"} | json | ( type="AVC" , apparmor="DENIED" )[1m])) > 0)
+                  labels:
+                    service: apparmor
+                    severity: critical
+                  annotations:
+                    message: Apparmor Denied woohoo {{ $labels.hostname }}
       {%- endraw %}
     auth_enabled: false
     server:
