@@ -138,9 +138,10 @@ class GrafanaAppService:
 
         if len(rules) > 0:
           rules_dataset = self.deepcopy({'namespace': 'rules'}, rules)
+          rules_file_path = f"{rules_path}/rules.yaml"
           self.config[rules_section] = {
             'file.serialize': [
-              {'name':            f"{rules_path}/rules.yaml"},
+              {'name':            rules_file_path},
               {'user':            'root'},
               {'group':           self.appname},
               {'mode':            '0640'},
@@ -150,7 +151,23 @@ class GrafanaAppService:
               {'serializer_opts': [{'indent': 2}]},
             ]
           }
-          service_deps.append(rules_section)
+          # service_deps.append(rules_section)
+
+          http_listen_address = config_dataset['server']['http_listen_address']
+          http_listen_port    = config_dataset['server']['http_listen_port']
+          if 'http_tls_config' in config_dataset['server']:
+            http_protocol = 'https'
+          else:
+            http_protocol       = 'http'
+
+          loki_address = f"{http_protocol}://{http_listen_address}:{http_listen_port}"
+          self.config["lokitool_sync_rules"] = {
+            'cmd.run': [
+              {'name': f" lokitool rules sync --address={loki_address} --id=1 --rule-files={rules_file_path}"},
+              {'require': [rules_section, service_section]},
+              {'onchanges': [rules_section]},
+            ]
+          }
 
         self.config[service_section] = {
           "service.running": [
