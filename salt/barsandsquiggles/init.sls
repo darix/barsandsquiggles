@@ -345,6 +345,9 @@ class LokiService(GrafanaAppService):
       ssl_config["pattern_ingester"] = {
         "client_config": {
           "grpc_client_config": grpc_client_ssl_config
+        },
+        "metric_aggregation": {
+          "use_tls": True
         }
       }
 
