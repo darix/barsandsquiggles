@@ -8,8 +8,8 @@
     loki_listen_{{ protocol_name }}:
       bind:
       {%- for bind_ip in bind_ips %}
-      - '{{ bind_ip }}:{{ non_proxy_protocol_listen_port }} tfo' {{ listen_options }}
-      - '{{ bind_ip }}:{{ proxy_protocol_listen_port }} tfo accept-proxy' {{ listen_options }}
+      - '{{ bind_ip }}:{{ non_proxy_protocol_listen_port }} tfo {{ listen_options }}'
+      - '{{ bind_ip }}:{{ proxy_protocol_listen_port }} tfo accept-proxy {{ listen_options }}'
       {%- endfor %}
       {%- if protocol_name == 'http' %}
       mode: http
