@@ -4,12 +4,12 @@
 {%-     set global_proxy_protocol_grpc_listen_port=3003 %}
 {%- set global_bind_ips = ['0.0.0.0'] %}
 
-{%- macro haproxy_loki_listen_by_protocol(mine_target, mine_function, target_port, protocol_name, proxy_protocol_listen_port, non_proxy_protocol_listen_port, bind_ips=global_bind_ips) %}
+{%- macro haproxy_loki_listen_by_protocol(mine_target, mine_function, target_port, protocol_name, proxy_protocol_listen_port, non_proxy_protocol_listen_port, bind_ips=global_bind_ips, listen_options="", defaultserver="") %}
     loki_listen_{{ protocol_name }}:
       bind:
       {%- for bind_ip in bind_ips %}
-      - '{{ bind_ip }}:{{ non_proxy_protocol_listen_port }} tfo'
-      - '{{ bind_ip }}:{{ proxy_protocol_listen_port }} tfo accept-proxy'
+      - '{{ bind_ip }}:{{ non_proxy_protocol_listen_port }} tfo' {{ listen_options }}
+      - '{{ bind_ip }}:{{ proxy_protocol_listen_port }} tfo accept-proxy' {{ listen_options }}
       {%- endfor %}
       {%- if protocol_name == 'http' %}
       mode: http
@@ -29,6 +29,7 @@
       timeouts:
         client: 150m
         server: 150m
+      defaultserver: "on-marked-down shutdown-sessions {{ defaultserver }}"
       servers:
         # for each node matching the target it will count up the loop index and append that to the server name
         loki-{{ protocol_name }}:
